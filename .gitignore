@@ -1,0 +1,65 @@
+# =========================
+# 1. API Keys and Secrets
+# =========================
+.env
+*.env
+secret_keys.json
+credentials.json
+
+# =========================
+# 2. Python & FastAPI Backend
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Databases (CRITICAL FIX)
+*.db
+*.sqlite3
+
+# =========================
+# 3. Flutter & Dart Frontend
+# =========================
+# (Updated to match your 'frontend' folder name)
+frontend/.dart_tool/
+frontend/.packages
+frontend/.pub-cache/
+frontend/.pub/
+frontend/build/
+frontend/ios/Pods/
+frontend/ios/.symlinks/
+frontend/ios/Flutter/Flutter.framework
+frontend/ios/Flutter/Flutter.podspec
+frontend/android/.gradle/
+frontend/android/app/src/main/gen/
+frontend/android/local.properties
+
+# =========================
+# 4. macOS & IDEs
+# =========================
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.vscode/
+.idea/
+*.swp
