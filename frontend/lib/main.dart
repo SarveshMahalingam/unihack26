@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:app/services/api_service.dart'; // Adjust path if needed
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const EthicalScannerApp());
@@ -215,39 +215,68 @@ class _ScannerScreenState extends State<ScannerScreen> {
           // 1. Raw Camera Feed
           MobileScanner(
             controller: controller,
-            onDetect: (BarcodeCapture capture) {
+            onDetect: (BarcodeCapture capture) async {
               if (!isScanning) return;
               for (final barcode in capture.barcodes) {
                 if (barcode.rawValue != null) {
                   setState(() => isScanning = false);
                   
-                  // Fun Success Message
+                  // 1. Show a loading message so the user knows the AI is thinking
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Row(
                         children: [
-                          Icon(Icons.check_circle, color: Colors.white70),
+                          const SizedBox(
+                            width: 20, 
+                            height: 20, 
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                          ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'Captured: ${barcode.rawValue}',
-                              style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
+                              'AI is analyzing ${barcode.rawValue}...',
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                             )
                           ),
                         ],
                       ),
-                      backgroundColor: skyBlue,
+                      backgroundColor: coral,
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       margin: const EdgeInsets.all(20),
-                      elevation: 10,
+                      duration: const Duration(seconds: 10), // Keep it open while loading
                     ),
                   );
 
-                  Future.delayed(const Duration(seconds: 3), () {
-                    if (mounted) setState(() => isScanning = true);
-                  });
-                  break;
+                  try {
+                    // 2. Get the logged-in User's ID 
+                    // (Assuming you saved it to SharedPreferences during login)
+                    final prefs = await SharedPreferences.getInstance();
+                    final userId = prefs.getString('user_id') ?? "6acdfe70-8ed5-4121-aede-e6bbb5ce305d"; 
+
+                    // 3. Hit your FastAPI backend!
+                    final geminiResult = await ApiService.scanProduct(barcode.rawValue!, userId);
+                    
+                    // Hide the loading snackbar
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+                    // Print it to the console so you can verify it works
+                    print("SUCCESS! GEMINI SAYS: $geminiResult");
+
+                    // TODO: Open a modal or new screen with the `geminiResult` data
+
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                    );
+                  } finally {
+                    // Wait a few seconds before allowing another scan
+                    Future.delayed(const Duration(seconds: 3), () {
+                      if (mounted) setState(() => isScanning = true);
+                    });
+                  }
+                  break; // Stop after the first valid barcode is found
                 }
               }
             },

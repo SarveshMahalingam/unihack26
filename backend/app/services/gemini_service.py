@@ -20,7 +20,7 @@ def analyze_food(product_data, user_profile):
     - nutri_score (A-E)
     - ethical_score (1-10)
     - status (safe, warning, danger)
-    - alerts (list of strings: state the specific allergies, dislikes, OR goal violations found.Mention "Contains x,y and z")
+    - alerts (list of strings: MUST be extremely concise. strictly use the format "Contains [item]" or "High in [item]". Example: "Contains peanuts", "High in sugar")
     - summary (2 sentences)
     """
     
