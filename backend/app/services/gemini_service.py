@@ -20,7 +20,7 @@ def analyze_food(product_data, user_profile):
     - nutri_score (A-E)
     - ethical_score (1-10)
     - status (safe, warning, danger)
-    - alerts (list of matched allergies/dislikes)
+    - alerts (list of strings: state the specific allergies, dislikes, OR goal violations found.Mention "Contains x,y and z")
     - summary (2 sentences)
     """
     
