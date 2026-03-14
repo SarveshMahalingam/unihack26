@@ -73,7 +73,6 @@
     
     <key>NSCameraUsageDescription</key>
     <string>This app requires camera access to scan products and display 3D ethical scores.</string>
-    <key>NSCameraUsageDescription</key>
-    <string>We need the camera to scan food barcodes.</string>
+
 </dict>
 </plist>

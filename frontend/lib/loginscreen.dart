@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'main.dart'; // Import this to access your ScannerScreen
-
+import ''
 // ==========================================
 // 3. SIGN UP / ONBOARDING PAGE
 // ==========================================
