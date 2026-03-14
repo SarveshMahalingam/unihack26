@@ -14,6 +14,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _nameController = TextEditingController();
+  final _passwordController = TextEditingController();
   final _allergiesController = TextEditingController();
   final _avoidController = TextEditingController();
 
@@ -78,6 +79,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _nameController,
                   label: "Your Name",
                   icon: Icons.person_outline,
+                ),
+                const SizedBox(height: 20),
+                _buildTextField(
+                  controller: _passwordController,
+                  label: "Password",
+                  icon: Icons.lock_outline,
                 ),
                 const SizedBox(height: 20),
                 _buildTextField(
