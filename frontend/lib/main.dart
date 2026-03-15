@@ -1,30 +1,37 @@
 import 'package:flutter/material.dart';
-import 'screens/auth_screen.dart'; // <-- Importing your new auth screen!
+import 'package:shared_preferences/shared_preferences.dart';
+import 'screens/auth_screen.dart';     // Adjust paths if your files 
+import 'screens/main_layout.dart';    // are in a different folder!
 
-void main() {
+void main() async {
+  // 1. Essential for accessing phone storage before the app starts
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const EthicalScannerApp());
+  
+  // 2. Check if a user is already logged in
+  final prefs = await SharedPreferences.getInstance();
+  final String? userId = prefs.getString('user_id');
+
+  runApp(MyApp(initialUserId: userId));
 }
 
-class EthicalScannerApp extends StatelessWidget {
-  const EthicalScannerApp({super.key});
+class MyApp extends StatelessWidget {
+  final String? initialUserId;
+  
+  const MyApp({super.key, this.initialUserId});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Ethical Scanner',
       debugShowCheckedModeBanner: false,
+      title: 'EthiScan AI',
       theme: ThemeData(
-        brightness: Brightness.light,
-        scaffoldBackgroundColor: Colors.white,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF545333), // Your custom deep olive
-          brightness: Brightness.light,
-        ),
+        primarySwatch: Colors.green,
         useMaterial3: true,
       ),
-      // THE MAGIC LINE: This tells the app to start at the new AuthScreen
-      home: const AuthScreen(), 
+      // 3. The Logic: If we have an ID, skip login and go to the app
+      home: initialUserId != null 
+          ? MainLayout(userId: initialUserId!) 
+          : const AuthScreen(),
     );
   }
 }

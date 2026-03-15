@@ -4,10 +4,13 @@ import 'profile_screen.dart';
 import 'history_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
-import 'analysis_screen.dart'; // Make sure this matches your file name!
+import 'analysis_screen.dart'; 
+import '../widgets/fun_fact_loading.dart'; // 🚨 1. Added the Fun Fact Dialog import!
 
 class MainLayout extends StatefulWidget {
-  const MainLayout({super.key});
+  final String userId; 
+
+  const MainLayout({super.key, required this.userId}); 
 
   @override
   State<MainLayout> createState() => _MainLayoutState();
@@ -16,11 +19,10 @@ class MainLayout extends StatefulWidget {
 class _MainLayoutState extends State<MainLayout> {
   int _currentIndex = 1; // Default to Scanner (middle)
 
-  // --- Screens ---
-  final List<Widget> _screens = [
-    const HistoryScreen(), // History
-    const ScannerTab(), // Scanner
-    const ProfileScreen(), // Profile
+  List<Widget> get _screens => [
+    const HistoryScreen(), 
+    const ScannerTab(), 
+    ProfileScreen(userId: widget.userId), 
   ];
 
   @override
@@ -43,7 +45,7 @@ class _MainLayoutState extends State<MainLayout> {
 }
 
 // ==========================================
-// THE MANUAL SCANNER TAB
+// THE MANUAL SCANNER TAB 
 // ==========================================
 class ScannerTab extends StatefulWidget {
   const ScannerTab({super.key});
@@ -54,7 +56,7 @@ class ScannerTab extends StatefulWidget {
 
 class _ScannerTabState extends State<ScannerTab> {
   final MobileScannerController _cameraController = MobileScannerController();
-  bool _isAwaitingScan = false; // The lock that prevents auto-scanning
+  bool _isAwaitingScan = false; 
 
   void _triggerScan() {
     setState(() => _isAwaitingScan = true);
@@ -67,27 +69,28 @@ class _ScannerTabState extends State<ScannerTab> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // 1. The Camera Feed
         MobileScanner(
           controller: _cameraController,
           onDetect: (capture) async {
-            // ONLY process if the user clicked the button
             if (!_isAwaitingScan) return;
 
             final List<Barcode> barcodes = capture.barcodes;
             if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
-              setState(() => _isAwaitingScan = false); // Lock it back up
+              setState(() => _isAwaitingScan = false); 
               
               final String barcode = barcodes.first.rawValue!;
               print("Manually captured barcode: $barcode");
               
-              // Show a loading snackbar so the user knows it's thinking
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Analyzing ingredients with AI..."), duration: Duration(seconds: 4)),
+              ScaffoldMessenger.of(context).hideCurrentSnackBar(); 
+
+              // 🚨 2. POP UP THE FUN FACT DIALOG
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => const FunFactLoadingDialog(),
               );
 
               try {
-                // 1. Get the logged-in User ID from phone storage
                 final prefs = await SharedPreferences.getInstance();
                 final userId = prefs.getString('user_id');
 
@@ -95,12 +98,14 @@ class _ScannerTabState extends State<ScannerTab> {
                   throw Exception("User ID not found. Please log in again.");
                 }
 
-                // 2. Hit your FastAPI backend!
+                // 3. Hit the backend
                 final resultData = await ApiService.scanProduct(barcode, userId);
 
-                // 3. Navigate to the Analysis Screen with the Gemini data
+                // 🚨 4. SAFELY close the dialog using rootNavigator
+                if (mounted) Navigator.of(context, rootNavigator: true).pop();
+
+                // 5. Navigate to results
                 if (mounted) {
-                  ScaffoldMessenger.of(context).hideCurrentSnackBar(); // Hide loading
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -109,9 +114,18 @@ class _ScannerTabState extends State<ScannerTab> {
                   );
                 }
               } catch (e) {
+                // 🚨 6. SAFELY close the dialog on error
+                if (mounted) Navigator.of(context, rootNavigator: true).pop();
+
+                // 🚨 7. Show the friendly "Oops" message
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
+                    const SnackBar(
+                      content: Text('Oops! The scan timed out or the product wasn\'t found. Please try scanning again! 🔄'),
+                      backgroundColor: Colors.orange,
+                      behavior: SnackBarBehavior.floating,
+                      duration: Duration(seconds: 4),
+                    ),
                   );
                 }
               }
@@ -119,7 +133,6 @@ class _ScannerTabState extends State<ScannerTab> {
           },
         ),
 
-        // 2. The Dark Cutout Overlay
         ColorFiltered(
           colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.7), BlendMode.srcOut),
           child: Stack(
@@ -132,7 +145,7 @@ class _ScannerTabState extends State<ScannerTab> {
                     width: 250,
                     height: 250,
                     decoration: BoxDecoration(
-                      color: Colors.black, // Punches the hole
+                      color: Colors.black, 
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
@@ -142,7 +155,6 @@ class _ScannerTabState extends State<ScannerTab> {
           ),
         ),
 
-        // 3. The Big "SCAN" Button
         Align(
           alignment: Alignment.bottomCenter,
           child: Padding(

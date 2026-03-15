@@ -1,12 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-
+import 'package:shared_preferences/shared_preferences.dart';
 class ApiService {
-  // IMPORTANT IP NOTE: 
-  // - If using iOS Simulator: Use 'http://127.0.0.1:8000'
-  // - If using Android Emulator: Use 'http://10.0.2.2:8000'
-  // - If using a physical phone: Use your Mac's local WiFi IP
-  static const String baseUrl = 'http://10.44.177.27:8000'; // Your working Hotspot IP
+  // 🚨 MASTER IP: Ensure this matches 'ipconfig getifaddr en0' on your Mac!
+  // static const String baseUrl = 'http://127.0.0.1:8000';
+  static const String baseUrl = "http://10.44.177.27:8000"; // Your Mac's Wi-Fi IP
 
   // ==========================================
   // 1. SCANNER API
@@ -14,8 +12,6 @@ class ApiService {
   static Future<Map<String, dynamic>> scanProduct(String barcode, String userId) async {
     try {
       final url = '$baseUrl/scan/$barcode?user_id=$userId';
-      print("🚨 ATTEMPTING TO HIT URL: $url");
-      
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
@@ -32,23 +28,22 @@ class ApiService {
   // 2. AUTHENTICATION API
   // ==========================================
   
-  // Sign Up
   static Future<String> signUp(String name, String email, String password) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/signup'), // Assuming this is your FastAPI create user route
+        Uri.parse('$baseUrl/signup'), 
         headers: {'Content-Type': 'application/json'},
+        // 🚨 ADDED 'name' HERE SO FASTAPI DOESN'T CRASH!
         body: jsonEncode({
-          'name': name,
+          'name': name, 
           'email': email, 
           'password': password,
-          // If your FastAPI schema requires 'name', you might need to add it to your UserCreate schema!
         }),
       );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return data['id']; // Returns the UUID from your database
+        return data['user_id']; 
       } else {
         throw Exception('Failed to sign up: ${response.body}');
       }
@@ -57,10 +52,8 @@ class ApiService {
     }
   }
 
-  // Log In
   static Future<String> logIn(String email, String password) async {
     try {
-      // NOTE: Update this URL if your FastAPI login route is named differently
       final response = await http.post(
         Uri.parse('$baseUrl/login'), 
         headers: {'Content-Type': 'application/json'},
@@ -82,20 +75,47 @@ class ApiService {
   // 3. PROFILE API
   // ==========================================
 
-  // Update Preferences (Allergies, Dislikes, Diets)
-  static Future<void> updatePreferences(String userId, Map<String, dynamic> preferences) async {
+    static Future<void> updatePreferences(String userId, Map<String, dynamic> preferences) async {
     try {
-      final response = await http.put(
+      final response = await http.post(
         Uri.parse('$baseUrl/profile/$userId'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(preferences),
-      );
+      ).timeout(const Duration(seconds: 10)); // 👈 Add this!
 
       if (response.statusCode != 200) {
-        throw Exception('Failed to update preferences: ${response.body}');
+        throw Exception('Server returned ${response.statusCode}: ${response.body}');
       }
     } catch (e) {
-      throw Exception('Network error updating profile: $e');
+      throw Exception('Network error: $e');
     }
+    
+  }
+  // Save Profile Data
+  static Future<void> cacheProfileData(String userId, Map<String, dynamic> data) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('profile_$userId', jsonEncode(data));
+  }
+
+  // Get Profile Data
+  static Future<Map<String, dynamic>?> getCachedProfile(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final dataString = prefs.getString('profile_$userId');
+    if (dataString != null) return jsonDecode(dataString);
+    return null;
+  }
+
+  // Save History Data
+  static Future<void> cacheHistoryData(String userId, List<dynamic> history) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('history_$userId', jsonEncode(history));
+  }
+
+  // Get History Data
+  static Future<List<dynamic>?> getCachedHistory(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final dataString = prefs.getString('history_$userId');
+    if (dataString != null) return jsonDecode(dataString);
+    return null;
   }
 }

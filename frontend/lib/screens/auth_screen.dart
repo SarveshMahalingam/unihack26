@@ -33,15 +33,21 @@ class _AuthScreenState extends State<AuthScreen> {
         // HIT LOGIN API
         userId = await ApiService.logIn(_emailController.text, _passwordController.text);
         
-        // Save to phone storage
+        // Save to phone storage for persistence
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('user_id', userId);
 
         // Go to Main Scanner
         if (mounted) {
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MainLayout()));
+          Navigator.pushReplacement(
+            context, 
+            MaterialPageRoute(
+              // Hand the ID over to the layout
+              builder: (_) => MainLayout(userId: userId) 
+            )
+          );
         }
-      } else {
+      }else {
         // HIT SIGNUP API
         userId = await ApiService.signUp(_nameController.text, _emailController.text, _passwordController.text);
         
@@ -84,9 +90,10 @@ class _AuthScreenState extends State<AuthScreen> {
                 child: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 30),
               ),
               const SizedBox(height: 24),
+              Text('GoodByte', style: const TextStyle(fontSize: 35, fontWeight: FontWeight.bold, color: Colors.white)),
               Text(
                 isLogin ? 'Welcome Back' : 'Create Account',
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
               ),
               const SizedBox(height: 8),
               Text(
@@ -109,7 +116,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
                         children: [
@@ -120,8 +127,8 @@ class _AuthScreenState extends State<AuthScreen> {
                                 padding: const EdgeInsets.symmetric(vertical: 12),
                                 decoration: BoxDecoration(
                                   color: !isLogin ? Colors.white : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(12),
-                                  boxShadow: !isLogin ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5)] : [],
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: !isLogin ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)] : [],
                                 ),
                                 child: Center(child: Text("Sign Up", style: TextStyle(fontWeight: !isLogin ? FontWeight.bold : FontWeight.normal))),
                               ),
@@ -134,7 +141,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                 padding: const EdgeInsets.symmetric(vertical: 12),
                                 decoration: BoxDecoration(
                                   color: isLogin ? Colors.white : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(20),
                                   boxShadow: isLogin ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5)] : [],
                                 ),
                                 child: Center(child: Text("Log In", style: TextStyle(fontWeight: isLogin ? FontWeight.bold : FontWeight.normal))),
@@ -148,46 +155,46 @@ class _AuthScreenState extends State<AuthScreen> {
 
                     // Inputs
                     if (!isLogin) ...[
-                      const Text("Name", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                      const Text("", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                       const SizedBox(height: 8),
                       TextField(
                         controller: _nameController,
                         decoration: InputDecoration(
-                          hintText: "Sarah Jenkins",
+                          hintText: "Name",
                           prefixIcon: const Icon(Icons.person_outline),
                           filled: true,
-                          fillColor: Colors.grey.shade50,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                          fillColor: Colors.grey.shade100,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
                         ),
                       ),
                       const SizedBox(height: 16),
                     ],
 
-                    const Text("Email Address", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                    const Text("", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _emailController,
                       decoration: InputDecoration(
-                        hintText: "you@example.com",
+                        hintText: "Email Address",
                         prefixIcon: const Icon(Icons.mail_outline),
                         filled: true,
-                        fillColor: Colors.grey.shade50,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                        fillColor: Colors.grey.shade100,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
                       ),
                     ),
                     const SizedBox(height: 16),
 
-                    const Text("Password", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                    const Text("", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _passwordController,
                       obscureText: true,
                       decoration: InputDecoration(
-                        hintText: "••••••••",
+                        hintText: "Password",
                         prefixIcon: const Icon(Icons.lock_outline),
                         filled: true,
-                        fillColor: Colors.grey.shade50,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                        fillColor: Colors.grey.shade100,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
                       ),
                     ),
                     
