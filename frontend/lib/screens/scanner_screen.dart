@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../services/api_service.dart';
+import 'analysis_screen.dart'; 
+import '../widgets/fun_fact_loading.dart'; 
 
 class ScannerScreen extends StatefulWidget {
-  final String userId; // Pass the user's ID here after they log in
+  final String userId; 
 
-  const ScannerScreen({Key? key, required this.userId}) : super(key: key);
+  const ScannerScreen({super.key, required this.userId});
 
   @override
   State<ScannerScreen> createState() => _ScannerScreenState();
@@ -15,29 +17,54 @@ class _ScannerScreenState extends State<ScannerScreen> {
   bool _isProcessing = false;
 
   void _handleBarcode(BarcodeCapture capture) async {
-    if (_isProcessing) return; // Prevent multiple scans at once
+    if (_isProcessing) return; 
     
     final List<Barcode> barcodes = capture.barcodes;
     if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
       setState(() => _isProcessing = true);
       
       final String barcode = barcodes.first.rawValue!;
-      print("Scanned barcode: $barcode"); // Check your debug console!
+      print("Scanned barcode: $barcode");
+
+      // Pop up the Fun Fact Loading Dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const FunFactLoadingDialog(),
+      );
 
       try {
-        // Send it to your FastAPI backend
         final result = await ApiService.scanProduct(barcode, widget.userId);
         
-        // Print the Gemini response to the console for now
-        print("Gemini Analysis: $result");
+        // 🚨 SAFELY close the dialog using rootNavigator
+        if (mounted) Navigator.of(context, rootNavigator: true).pop();
 
-        // TODO: Navigate to a Results Screen to show the 'status', 'alerts', and 'summary'
-        
+        if (mounted) {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AnalysisScreen(resultData: result),
+            ),
+          );
+        }
       } catch (e) {
-        print("Error analyzing product: $e");
+        // 🚨 SAFELY close the dialog on error
+        if (mounted) Navigator.of(context, rootNavigator: true).pop();
+        
+        // Friendly error message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Oops! The scan timed out or the product wasn\'t found. Please try scanning again! 🔄'),
+              backgroundColor: Colors.orange,
+              behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 4),
+            ),
+          );
+        }
       } finally {
-        // Wait a few seconds before allowing another scan
-        await Future.delayed(const Duration(seconds: 3));
+        // Wait 2 seconds before unlocking the camera to prevent spamming
+        await Future.delayed(const Duration(seconds: 2));
         if (mounted) {
           setState(() => _isProcessing = false);
         }
@@ -48,17 +75,14 @@ class _ScannerScreenState extends State<ScannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Scan a Product')),
-      body: Stack(
-        children: [
-          MobileScanner(
-            onDetect: _handleBarcode,
-          ),
-          if (_isProcessing)
-            const Center(
-              child: CircularProgressIndicator(), // Show loading spinner while Gemini thinks
-            ),
-        ],
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: const Text('Scan a Product', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        iconTheme: const IconThemeData(color: Colors.black),
+      ),
+      body: MobileScanner(
+        onDetect: _handleBarcode,
       ),
     );
   }

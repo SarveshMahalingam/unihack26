@@ -3,30 +3,29 @@ from google import genai
 from dotenv import load_dotenv
 
 load_dotenv()
-
-# Initialize the new SDK client
-
 client = genai.Client(api_key=os.getenv("GEM_API"))
 
-def analyze_food(product_data, user_profile):
+def analyze_product(ingredients: str, user_profile: str) -> str:
     prompt = f"""
-    Analyze product: {product_data.get('product_name', 'Unknown')}
-    Ingredients: {product_data.get('ingredients_text', 'N/A')}
-    User Allergies: {user_profile['allergies']}
-    User Dislikes: {user_profile['dislikes']}
-    User Goals: {user_profile['goals']}
+    You are an expert health and dietary analyzer. 
+    Review these ingredients: {ingredients}
+    Against this exact user profile: {user_profile}
 
-    Return a JSON response with:
-    - nutri_score (A-E)
-    - ethical_score (1-10)
-    - status (safe, warning, danger)
-    - alerts (list of strings: MUST be extremely concise. strictly use the format "Contains [item]" or "High in [item]". Example: "Contains peanuts", "High in sugar")
-    - summary (2 sentences)
+    Return ONLY a raw JSON object (no markdown, no backticks) matching this structure:
+    {{
+        "health_match": false,
+        "health_status": "Allergen Alert",
+        "flagged_ingredients": ["Peanut Oil", "Whey Protein"]
+    }}
+    
+    Rules:
+    1. "health_match" MUST be false if ANY ingredient violates an allergy, dislike, or dietary goal.
+    2. "flagged_ingredients" MUST be an array of the ingredients from the list that caused the violation. Leave empty if totally safe.Keep the word limit as minimal as possible
     """
     
-    # New generation syntax
     response = client.models.generate_content(
         model='gemini-2.5-flash',
-        contents=prompt
+        contents=prompt,
     )
-    return response.text
+    
+    return response.text.replace("⁠ json", "").replace(" ⁠", "").strip()

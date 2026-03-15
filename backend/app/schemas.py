@@ -1,5 +1,8 @@
 from pydantic import BaseModel, EmailStr, field_validator
 from typing import List, Union, Any, Optional
+from pydantic import BaseModel
+from typing import List
+
 class UserBase(BaseModel):
     email: EmailStr
 
@@ -61,8 +64,11 @@ class ProfileBase(BaseModel):
             
         return v
 
-class ProfileUpdate(ProfileBase):
-    pass
+
+class ProfileUpdate(BaseModel):
+    allergies: List[str]
+    dislikes: List[str]
+    dietary_goals: List[str]
 
 class ProfileResponse(ProfileBase):
     email: str
